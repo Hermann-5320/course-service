@@ -84,4 +84,18 @@ public class AuthServiceClient {
         );
         return response.getBody();
     }
+    // Récupérer les chauffeurs disponibles dans une ville
+    public List<Map<String, Object>> getChauffeursDisponibles(Long villeId, String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", token);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<List> response = restTemplate.exchange(
+                authServiceUrl + "/api/chauffeurs/en-ligne?villeId=" + villeId,
+                HttpMethod.GET,
+                entity,
+                List.class
+        );
+        return response.getBody();
+    }
 }

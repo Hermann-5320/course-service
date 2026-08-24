@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import java.util.Map;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -150,5 +151,13 @@ public class CourseController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Course> annulerCourseAdmin(@PathVariable Long id) {
         return ResponseEntity.ok(courseService.annulerCourse(id, null, "ADMIN"));
+    }
+    // Voir les chauffeurs disponibles avant de créer une course
+    @GetMapping("/chauffeurs-disponibles")
+    @PreAuthorize("hasRole('PASSAGER')")
+    public ResponseEntity<List<Map<String, Object>>> chauffeursDisponibles(
+            @RequestParam Long villeId,
+            @RequestHeader("Authorization") String token) {
+        return ResponseEntity.ok(authServiceClient.getChauffeursDisponibles(villeId, token));
     }
 }
