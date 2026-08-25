@@ -98,4 +98,19 @@ public class AuthServiceClient {
         );
         return response.getBody();
     }
+    public void incrementerCoursesChauffeur(Long chauffeurId, String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", token);
+        headers.set("Content-Type", "application/json");
+
+        Map<String, Object> body = Map.of("incrementerCourses", true);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
+        restTemplate.exchange(
+                authServiceUrl + "/api/chauffeurs/" + chauffeurId + "/stats",
+                HttpMethod.PUT,
+                entity,
+                Void.class
+        );
+    }
 }

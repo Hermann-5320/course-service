@@ -222,4 +222,7 @@ public class CourseService {
             throw new RuntimeException("Transition de statut invalide : " + actuel + " → " + nouveau);
         }
     }
+    public Double calculerNoteMoyenneChauffeur(Long chauffeurId) {
+        return notationRepository.calculerNoteMoyenne(chauffeurId);
+    }
 }

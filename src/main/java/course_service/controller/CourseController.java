@@ -71,7 +71,13 @@ public class CourseController {
             @RequestHeader("Authorization") String token) {
         Long utilisateurId = jwtService.extraireUserId(token.substring(7));
         Long passagerId = authServiceClient.getPassagerId(utilisateurId, token);
-        return ResponseEntity.ok(courseService.noterChauffeur(id, dto, passagerId));
+        Notation notation = courseService.noterChauffeur(id, dto, passagerId);
+
+        // Recalculer et mettre à jour la note moyenne du chauffeur
+        Double nouvelleMoyenne = courseService.calculerNoteMoyenneChauffeur(notation.getChauffeurId());
+        authServiceClient.mettreAJourStatsChauffeur(notation.getChauffeurId(), nouvelleMoyenne, token);
+
+        return ResponseEntity.ok(notation);
     }
 
     // ── CHAUFFEUR ─────────────────────────────────────────
@@ -96,7 +102,14 @@ public class CourseController {
             @RequestHeader("Authorization") String token) {
         Long utilisateurId = jwtService.extraireUserId(token.substring(7));
         Long chauffeurId = authServiceClient.getChauffeurId(utilisateurId, token);
-        return ResponseEntity.ok(courseService.mettreAJourStatut(id, dto.getStatut(), chauffeurId));
+        Course course = courseService.mettreAJourStatut(id, dto.getStatut(), chauffeurId);
+
+        // Si la course vient de se terminer, incrémenter le compteur de courses du chauffeur
+        if (dto.getStatut().equals("TERMINEE")) {
+            authServiceClient.incrementerCoursesChauffeur(chauffeurId, token);
+        }
+
+        return ResponseEntity.ok(course);
     }
 
     // Annuler une course (chauffeur)
