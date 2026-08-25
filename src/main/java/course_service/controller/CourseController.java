@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.Map;
 import org.springframework.web.bind.annotation.*;
+import course_service.dto.SuggestionAdresseDTO;
+import course_service.service.GeocodageService;
 
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class CourseController {
     private final CourseService courseService;
     private final JwtService jwtService;
     private final AuthServiceClient authServiceClient;
+    private final GeocodageService geocodageService;
 
     // ── PASSAGER ──────────────────────────────────────────
 
@@ -159,5 +162,12 @@ public class CourseController {
             @RequestParam Long villeId,
             @RequestHeader("Authorization") String token) {
         return ResponseEntity.ok(authServiceClient.getChauffeursDisponibles(villeId, token));
+    }
+    // Recherche d'adresse avec autocomplétion (proxy vers SerpApi)
+    @GetMapping("/rechercher-adresse")
+    @PreAuthorize("hasAnyRole('PASSAGER','CHAUFFEUR')")
+    public ResponseEntity<List<SuggestionAdresseDTO>> rechercherAdresse(
+            @RequestParam String q) {
+        return ResponseEntity.ok(geocodageService.rechercherAdresses(q));
     }
 }
