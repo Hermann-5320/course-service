@@ -113,4 +113,19 @@ public class AuthServiceClient {
                 Void.class
         );
     }
+    public void ajouterKilometres(Long chauffeurId, java.math.BigDecimal km, String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", token);
+        headers.set("Content-Type", "application/json");
+
+        Map<String, Object> body = Map.of("kmAAjouter", km);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
+        restTemplate.exchange(
+                authServiceUrl + "/api/chauffeurs/" + chauffeurId + "/stats",
+                HttpMethod.PUT,
+                entity,
+                Void.class
+        );
+    }
 }

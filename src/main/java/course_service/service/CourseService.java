@@ -30,8 +30,20 @@ public class CourseService {
     @Transactional
     public Course creerCourse(CreerCourseDTO dto, Long passagerId) {
 
-        // Calculer le prix estimé
-        BigDecimal prixEstime = calculerPrix(dto.getTypeVehicule(), dto.getDepartLat(),
+        BigDecimal distanceKm = null;
+        BigDecimal prixEstime;
+
+        if (dto.getDepartLat() != null && dto.getDepartLng() != null
+                && dto.getArriveeLat() != null && dto.getArriveeLng() != null) {
+
+            double distance = calculerDistanceKm(
+                    dto.getDepartLat().doubleValue(), dto.getDepartLng().doubleValue(),
+                    dto.getArriveeLat().doubleValue(), dto.getArriveeLng().doubleValue()
+            );
+            distanceKm = BigDecimal.valueOf(distance).setScale(2, RoundingMode.HALF_UP);
+        }
+
+        prixEstime = calculerPrix(dto.getTypeVehicule(), dto.getDepartLat(),
                 dto.getDepartLng(), dto.getArriveeLat(), dto.getArriveeLng());
 
         Course course = new Course();
@@ -44,6 +56,7 @@ public class CourseService {
         course.setArriveeAdresse(dto.getArriveeAdresse());
         course.setArriveeLat(dto.getArriveeLat());
         course.setArriveeLng(dto.getArriveeLng());
+        course.setDistanceKm(distanceKm);
         course.setPrixEstime(prixEstime);
         course.setStatut("EN_ATTENTE");
 

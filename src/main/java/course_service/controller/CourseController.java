@@ -104,14 +104,15 @@ public class CourseController {
         Long chauffeurId = authServiceClient.getChauffeurId(utilisateurId, token);
         Course course = courseService.mettreAJourStatut(id, dto.getStatut(), chauffeurId);
 
-        // Si la course vient de se terminer, incrémenter le compteur de courses du chauffeur
         if (dto.getStatut().equals("TERMINEE")) {
             authServiceClient.incrementerCoursesChauffeur(chauffeurId, token);
+            if (course.getDistanceKm() != null) {
+                authServiceClient.ajouterKilometres(chauffeurId, course.getDistanceKm(), token);
+            }
         }
 
         return ResponseEntity.ok(course);
     }
-
     // Annuler une course (chauffeur)
     @PutMapping("/{id}/annuler-chauffeur")
     @PreAuthorize("hasRole('CHAUFFEUR')")
