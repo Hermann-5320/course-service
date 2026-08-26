@@ -36,4 +36,18 @@ public class PaiementServiceClient {
                 String.class
         );
     }
+    public boolean soldeSuffisant(Long chauffeurId, String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", token);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        Map reponse = restTemplate.exchange(
+                paiementServiceUrl + "/api/paiements/verifier-solde/" + chauffeurId,
+                org.springframework.http.HttpMethod.GET,
+                entity,
+                Map.class
+        ).getBody();
+
+        return reponse != null && Boolean.TRUE.equals(reponse.get("suffisant"));
+    }
 }

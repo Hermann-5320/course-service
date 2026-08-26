@@ -92,6 +92,11 @@ public class CourseController {
             @RequestHeader("Authorization") String token) {
         Long utilisateurId = jwtService.extraireUserId(token.substring(7));
         Long chauffeurId = authServiceClient.getChauffeurId(utilisateurId, token);
+
+        if (!paiementServiceClient.soldeSuffisant(chauffeurId, token)) {
+            throw new RuntimeException("Solde insuffisant. Veuillez recharger votre compte pour continuer à accepter des courses.");
+        }
+
         return ResponseEntity.ok(courseService.accepterCourse(id, chauffeurId));
     }
 
