@@ -14,6 +14,7 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.*;
 import course_service.dto.SuggestionAdresseDTO;
 import course_service.service.GeocodageService;
+import course_service.client.PaiementServiceClient;
 
 import java.util.List;
 
@@ -27,6 +28,7 @@ public class CourseController {
     private final JwtService jwtService;
     private final AuthServiceClient authServiceClient;
     private final GeocodageService geocodageService;
+    private final PaiementServiceClient paiementServiceClient;
 
     // ── PASSAGER ──────────────────────────────────────────
 
@@ -109,6 +111,8 @@ public class CourseController {
             if (course.getDistanceKm() != null) {
                 authServiceClient.ajouterKilometres(chauffeurId, course.getDistanceKm(), token);
             }
+            // Déduire automatiquement la commission
+            paiementServiceClient.deduireCommission(chauffeurId, course.getPrixFinal(), course.getId());
         }
 
         return ResponseEntity.ok(course);

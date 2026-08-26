@@ -24,5 +24,7 @@ app:
     secret: ${APP_JWT_SECRET:schooldriva_secret_key_2026_very_long_string_at_least_256_bits_ok}
   auth-service:
     url: ${AUTH_SERVICE_URL:http://localhost:8081}
+  paiement-service:
+    url: ${PAIEMENT_SERVICE_URL:http://localhost:8083}
   serpapi:
     key: ${SERPAPI_KEY:}

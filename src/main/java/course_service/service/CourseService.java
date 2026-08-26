@@ -21,10 +21,8 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final NotationRepository notationRepository;
+    private final ParametreService parametreService;
 
-    // Tarifs par km
-    private static final BigDecimal TARIF_VOITURE = new BigDecimal("500");
-    private static final BigDecimal TARIF_MOTO = new BigDecimal("300");
 
     // ── CREER UNE COURSE ──────────────────────────────────
     @Transactional
@@ -194,20 +192,25 @@ public class CourseService {
     // ── CALCUL DU PRIX ────────────────────────────────────
     private BigDecimal calculerPrix(String typeVehicule, BigDecimal lat1, BigDecimal lng1,
                                     BigDecimal lat2, BigDecimal lng2) {
+
+        BigDecimal prixMinimum = parametreService.getValeurDecimal("PRIX_MINIMUM", "500");
+
         if (lat1 == null || lng1 == null || lat2 == null || lng2 == null) {
-            // Prix par défaut si pas de coordonnées
-            return new BigDecimal("1500");
+            return prixMinimum;
         }
 
         double distanceKm = calculerDistanceKm(
                 lat1.doubleValue(), lng1.doubleValue(),
                 lat2.doubleValue(), lng2.doubleValue()
         );
-        BigDecimal tarif = typeVehicule.equalsIgnoreCase("MOTO") ? TARIF_MOTO : TARIF_VOITURE;
+
+        BigDecimal tarif = typeVehicule.equalsIgnoreCase("MOTO")
+                ? parametreService.getValeurDecimal("TARIF_MOTO_KM", "300")
+                : parametreService.getValeurDecimal("TARIF_VOITURE_KM", "500");
+
         BigDecimal prix = tarif.multiply(new BigDecimal(distanceKm));
 
-        // Prix minimum 500 FCFA
-        return prix.max(new BigDecimal("500")).setScale(0, RoundingMode.HALF_UP);
+        return prix.max(prixMinimum).setScale(0, RoundingMode.HALF_UP);
     }
 
     // Formule Haversine pour calculer la distance entre 2 points GPS
