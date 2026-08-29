@@ -32,4 +32,5 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     // Courses d'un passager par statut
     List<Course> findByPassagerIdAndStatut(Long passagerId, String statut);
+    //
 }

@@ -70,6 +70,14 @@ public class CourseService {
             throw new RuntimeException("Cette course n'est plus disponible");
         }
 
+        // Vérifier que le chauffeur n'a pas déjà une course active
+        List<String> statutsActifs = List.of("ACCEPTEE", "EN_ROUTE", "ARRIVEE", "DEMARREE");
+        List<Course> coursesActives = courseRepository.findByChauffeurIdAndStatutIn(chauffeurId, statutsActifs);
+
+        if (!coursesActives.isEmpty()) {
+            throw new RuntimeException("Vous avez déjà une course en cours. Terminez-la avant d'en accepter une nouvelle.");
+        }
+
         course.setChauffeurId(chauffeurId);
         course.setStatut("ACCEPTEE");
         return courseRepository.save(course);
