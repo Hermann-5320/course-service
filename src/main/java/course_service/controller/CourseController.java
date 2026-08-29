@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import course_service.dto.SuggestionAdresseDTO;
 import course_service.service.GeocodageService;
 import course_service.client.PaiementServiceClient;
+import course_service.entity.Paiement;
+import course_service.dto.DeclarerPaiementDTO;
 
 import java.util.List;
 
@@ -110,16 +112,12 @@ public class CourseController {
         Long utilisateurId = jwtService.extraireUserId(token.substring(7));
         Long chauffeurId = authServiceClient.getChauffeurId(utilisateurId, token);
         Course course = courseService.mettreAJourStatut(id, dto.getStatut(), chauffeurId);
-
         if (dto.getStatut().equals("TERMINEE")) {
             authServiceClient.incrementerCoursesChauffeur(chauffeurId, token);
             if (course.getDistanceKm() != null) {
                 authServiceClient.ajouterKilometres(chauffeurId, course.getDistanceKm(), token);
             }
-            // Déduire automatiquement la commission
-            paiementServiceClient.deduireCommission(chauffeurId, course.getPrixFinal(), course.getId());
         }
-
         return ResponseEntity.ok(course);
     }
     // Annuler une course (chauffeur)
@@ -192,5 +190,32 @@ public class CourseController {
     public ResponseEntity<List<SuggestionAdresseDTO>> rechercherAdresse(
             @RequestParam String q) {
         return ResponseEntity.ok(geocodageService.rechercherAdresses(q));
+    }
+    // ajouter l endpoint de declaration de paiement (passager)
+    @PostMapping("/{id}/paiement")
+    @PreAuthorize("hasRole('PASSAGER')")
+    public ResponseEntity<Paiement> declarerPaiement(
+            @PathVariable Long id,
+            @Valid @RequestBody DeclarerPaiementDTO dto,
+            @RequestHeader("Authorization") String token) {
+        Long utilisateurId = jwtService.extraireUserId(token.substring(7));
+        Long passagerId = authServiceClient.getPassagerId(utilisateurId, token);
+        return ResponseEntity.ok(courseService.declarerPaiement(id, dto, passagerId));
+    }
+    // ajouter l endpoint de confirmation de paiement
+    @PutMapping("/{id}/paiement/confirmer")
+    @PreAuthorize("hasRole('CHAUFFEUR')")
+    public ResponseEntity<Paiement> confirmerPaiement(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String token) {
+        Long utilisateurId = jwtService.extraireUserId(token.substring(7));
+        Long chauffeurId = authServiceClient.getChauffeurId(utilisateurId, token);
+
+        Paiement paiement = courseService.confirmerPaiement(id, chauffeurId);
+
+        // Maintenant qu'on a confirmé, on déduit la commission
+        paiementServiceClient.deduireCommission(chauffeurId, paiement.getMontant(), id);
+
+        return ResponseEntity.ok(paiement);
     }
 }

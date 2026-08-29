@@ -8,7 +8,9 @@ import course_service.repository.NotationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import course_service.entity.Paiement;
+import course_service.repository.PaiementRepository;
+import course_service.dto.DeclarerPaiementDTO;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -22,6 +24,7 @@ public class CourseService {
     private final CourseRepository courseRepository;
     private final NotationRepository notationRepository;
     private final ParametreService parametreService;
+    private final PaiementRepository paiementRepository;
 
 
     // ── CREER UNE COURSE ──────────────────────────────────
@@ -248,5 +251,60 @@ public class CourseService {
     }
     public Double calculerNoteMoyenneChauffeur(Long chauffeurId) {
         return notationRepository.calculerNoteMoyenne(chauffeurId);
+    }
+    // ── DECLARER LE PAIEMENT (PASSAGER) ───────────────────
+
+    // ── CONFIRMER LE PAIEMENT (CHAUFFEUR) ─────────────────
+    @Transactional
+    public Paiement confirmerPaiement(Long courseId, Long chauffeurId) {
+        Course course = getCourseById(courseId);
+
+        if (!course.getChauffeurId().equals(chauffeurId)) {
+            throw new RuntimeException("Vous n'êtes pas le chauffeur de cette course");
+        }
+
+        Paiement paiement = paiementRepository.findByCourseId(courseId)
+                .orElseThrow(() -> new RuntimeException("Aucun paiement déclaré pour cette course"));
+
+        if (paiement.getStatut().equals("CONFIRME")) {
+            throw new RuntimeException("Ce paiement a déjà été confirmé");
+        }
+
+        paiement.setStatut("CONFIRME");
+        paiement.setConfirmeAt(java.time.LocalDateTime.now());
+        return paiementRepository.save(paiement);
+    }
+    // ── DECLARER LE PAIEMENT (PASSAGER) ───────────────────
+    @Transactional
+    public Paiement declarerPaiement(Long courseId, DeclarerPaiementDTO dto, Long passagerId) {
+        Course course = getCourseById(courseId);
+
+        if (!course.getPassagerId().equals(passagerId)) {
+            throw new RuntimeException("Vous n'êtes pas le passager de cette course");
+        }
+
+        if (!course.getStatut().equals("TERMINEE")) {
+            throw new RuntimeException("La course doit être terminée pour déclarer un paiement");
+        }
+
+        if (paiementRepository.findByCourseId(courseId).isPresent()) {
+            throw new RuntimeException("Un paiement a déjà été déclaré pour cette course");
+        }
+
+        BigDecimal montant = course.getPrixFinal();
+        BigDecimal tauxCommission = parametreService.getValeurDecimal("COMMISSION_POURCENTAGE", "15");
+        BigDecimal commission = montant.multiply(tauxCommission)
+                .divide(new BigDecimal("100"), 0, RoundingMode.HALF_UP);
+        BigDecimal gainChauffeur = montant.subtract(commission);
+
+        Paiement paiement = new Paiement();
+        paiement.setCourseId(courseId);
+        paiement.setMode(dto.getMode().toUpperCase());
+        paiement.setMontant(montant);
+        paiement.setCommission(commission);
+        paiement.setGainChauffeur(gainChauffeur);
+        paiement.setStatut("EN_ATTENTE");
+
+        return paiementRepository.save(paiement);
     }
 }
