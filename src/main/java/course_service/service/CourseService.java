@@ -16,6 +16,7 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -73,12 +74,19 @@ public class CourseService {
             throw new RuntimeException("Cette course n'est plus disponible");
         }
 
-        // Vérifier que le chauffeur n'a pas déjà une course active
         List<String> statutsActifs = List.of("ACCEPTEE", "EN_ROUTE", "ARRIVEE", "DEMARREE");
         List<Course> coursesActives = courseRepository.findByChauffeurIdAndStatutIn(chauffeurId, statutsActifs);
 
         if (!coursesActives.isEmpty()) {
             throw new RuntimeException("Vous avez déjà une course en cours. Terminez-la avant d'en accepter une nouvelle.");
+        }
+
+        List<Course> coursesTerminees = courseRepository.findByChauffeurIdAndStatutIn(chauffeurId, List.of("TERMINEE"));
+        for (Course c : coursesTerminees) {
+            Optional<Paiement> paiement = paiementRepository.findByCourseId(c.getId());
+            if (paiement.isEmpty() || paiement.get().getStatut().equals("EN_ATTENTE")) {
+                throw new RuntimeException("Vous devez confirmer le paiement de votre course précédente (#" + c.getId() + ") avant d'en accepter une nouvelle.");
+            }
         }
 
         course.setChauffeurId(chauffeurId);
