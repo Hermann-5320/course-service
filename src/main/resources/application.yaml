@@ -28,3 +28,5 @@ app:
     url: ${PAIEMENT_SERVICE_URL:http://localhost:8083}
   serpapi:
     key: ${SERPAPI_KEY:}
+  cors:
+    origins: ${CORS_ORIGINS:http://localhost:5173}
